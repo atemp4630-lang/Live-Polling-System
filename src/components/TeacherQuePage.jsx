@@ -122,6 +122,11 @@ const TeacherQuePage = () => {
   const handleEndPoll = async () => {
     try {
       emit('end_poll');
+      // Update parent component state if needed
+      if (window.history.state?.from === 'teacher') {
+        // Signal that poll has ended
+        localStorage.setItem('pollEnded', 'true');
+      }
       setTimeout(() => {
         navigate("/teacher");
       }, 1000);
@@ -230,6 +235,12 @@ const TeacherQuePage = () => {
           >
             + Ask new question
           </button>
+        </div>
+        
+        <div className="text-center mt-4">
+          <p className="text-gray-600 text-sm">
+            Total Responses: {totalVotes} | Poll Status: Active
+          </p>
         </div>
       </div>
     </div>

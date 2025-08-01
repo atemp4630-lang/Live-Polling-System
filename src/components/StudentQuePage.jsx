@@ -19,6 +19,7 @@ const StudentQuePage = () => {
   const [results, setResults] = useState(location.state?.poll?.results || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showResults, setShowResults] = useState(false);
   
   useEffect(() => {
     if (!user) {
@@ -45,6 +46,7 @@ const StudentQuePage = () => {
       console.log('Vote confirmed:', data);
       setSubmitted(true);
       setResults(data.results);
+      setShowResults(true);
       setError("");
     };
 
@@ -52,6 +54,7 @@ const StudentQuePage = () => {
       console.log('Poll ended:', data);
       setSubmitted(true);
       setResults(data.results);
+      setShowResults(true);
       setTimeout(() => {
         navigate('/PreQuestion');
       }, 5000);
@@ -118,6 +121,7 @@ const StudentQuePage = () => {
 
   const handleTimeUp = () => {
     setSubmitted(true);
+    setShowResults(true);
     setError("Time's up! Poll has ended.");
   };
 
@@ -179,6 +183,7 @@ const StudentQuePage = () => {
   }
 
   const displayResults = submitted && results;
+  const shouldShowResults = showResults && results;
   const totalVotes = displayResults ? results.reduce((sum, opt) => sum + opt.votes, 0) : 0;
 
   return (
@@ -228,7 +233,7 @@ const StudentQuePage = () => {
                 } rounded-sm mb-2 ${submitted || timer === 0 ? 'cursor-not-allowed opacity-60' : ''}`}
                 style={{ transition: "background 0.2s, box-shadow 0.2s" }}
               >
-                {displayResults ? (
+                {shouldShowResults ? (
                   <PollOption
                     option={{ 
                       id: index + 1, 
@@ -291,7 +296,7 @@ const StudentQuePage = () => {
         <div className="flex justify-center items-center mt-8">
           {submitted && (
             <span className="text-black text-lg font-medium text-center">
-              {displayResults 
+              {shouldShowResults 
                 ? "Results are live! Wait for the teacher to ask a new question..." 
                 : "Answer submitted! Wait for results..."
               }

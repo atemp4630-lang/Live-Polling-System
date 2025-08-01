@@ -44,12 +44,22 @@ const PreQuestion = () => {
     const handleNewPoll = (pollData) => {
       console.log('New poll received in PreQuestion:', pollData);
       setSocketStatus('Received new poll, navigating to question page...');
+      // Clear any previous poll state
+      localStorage.removeItem('currentPollAnswered');
       navigate('/sque', { state: { poll: pollData } });
     };
 
     const handleCurrentPoll = (pollData) => {
       console.log('Current poll received in PreQuestion:', pollData);
       if (pollData && pollData.id) {
+        // Check if user already answered this poll
+        const answeredPolls = JSON.parse(localStorage.getItem('answeredPolls') || '[]');
+        const hasAnswered = answeredPolls.includes(pollData.id);
+        
+        if (hasAnswered) {
+          pollData.hasVoted = true;
+        }
+        
         navigate('/sque', { state: { poll: pollData } });
       }
     };

@@ -19,8 +19,11 @@ const TeacherPage = () => {
   const [error, setError] = useState("");
   const [sessionCode, setSessionCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [hasActivePoll, setHasActivePoll] = useState(false);
+  const [checkingPoll, setCheckingPoll] = useState(true);
 
   useEffect(() => {
+    checkForActivePoll();
     // Fetch current session info to get the session code
     const fetchSessionInfo = async () => {
       try {
@@ -35,6 +38,21 @@ const TeacherPage = () => {
 
     fetchSessionInfo();
   }, []);
+
+  const checkForActivePoll = async () => {
+    try {
+      const response = await pollAPI.getCurrent();
+      if (response.data && response.data.poll) {
+        setHasActivePoll(true);
+      } else {
+        setHasActivePoll(false);
+      }
+    } catch (error) {
+      setHasActivePoll(false);
+    } finally {
+      setCheckingPoll(false);
+    }
+  };
 
   const handleOptionChange = (index, newValue) => {
     const updated = [...options];
@@ -57,6 +75,11 @@ const TeacherPage = () => {
   const { emit } = useSocket();
 
   const handleSubmit = async () => {
+    if (hasActivePoll) {
+      setError("Please wait for the current poll to end before creating a new one");
+      return;
+    }
+
     if (!question.trim()) {
       setError("Please enter a question");
       return;
@@ -92,6 +115,7 @@ const TeacherPage = () => {
 
       console.log("Poll creation request sent via socket");
       setTimeout(() => {
+        setHasActivePoll(true);
         navigate("/tque");
       }, 1000);
     } catch (error) {
@@ -248,12 +272,26 @@ const TeacherPage = () => {
         <div className="flex justify-end">
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || hasActivePoll || checkingPoll}
             className="px-6 py-3 bg-gradient-to-r from-[#8F64E1] to-[#1D68BD] text-white font-semibold rounded-full hover:opacity-90 transition disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Ask Question"}
+            {checkingPoll ? "Checking..." : loading ? "Creating..." : hasActivePoll ? "Poll Active - End Current Poll First" : "Ask Question"}
           </button>
         </div>
+        
+        {hasActivePoll && !checkingPoll && (
+          <div className="mt-4 text-center">
+            <p className="text-orange-600 text-sm mb-2">
+              You have an active poll running. You can only create a new poll after ending the current one.
+            </p>
+            <button
+              onClick={() => navigate("/tque")}
+              className="text-[#8F64E1] underline text-sm hover:text-[#7048C6]"
+            >
+              Go to Current Poll
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

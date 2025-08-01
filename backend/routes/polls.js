@@ -22,6 +22,18 @@ router.post("/create", auth, validatePoll, async (req, res) => {
         .json({ error: "Must be in a session to create polls" });
     }
 
+    // Check if there's already an active poll
+    const existingPoll = await Poll.findOne({
+      sessionId: user.currentSession,
+      status: "active"
+    });
+
+    if (existingPoll) {
+      return res.status(400).json({ 
+        error: "There is already an active poll. Please end the current poll before creating a new one." 
+      });
+    }
+
     const { question, options, correctAnswer, duration } = req.body;
 
     // End any active polls created by this teacher
