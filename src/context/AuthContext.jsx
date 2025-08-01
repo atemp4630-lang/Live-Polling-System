@@ -38,6 +38,19 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (name, role, sessionCode) => {
     try {
+      // Validate inputs
+      if (!name?.trim()) {
+        return { success: false, error: 'Name is required' };
+      }
+      
+      if (!sessionCode?.trim()) {
+        return { success: false, error: 'Session code is required' };
+      }
+
+      if (sessionCode.trim().length !== 6) {
+        return { success: false, error: 'Session code must be 6 characters' };
+      }
+
       const response = await authAPI.join({
         name: name.trim(),
         role,
@@ -55,9 +68,27 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (error) {
       console.error('Login error:', error);
+      
+      // More detailed error handling
+      let errorMessage = 'Failed to join session';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Session not found. Please check the session code.';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response.data?.error || 'Invalid session details';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. You may be temporarily banned.';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your connection.';
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Network error. Please try again.';
+      }
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Failed to join session' 
+        error: errorMessage
       };
     }
   };

@@ -162,7 +162,7 @@ sessionSchema.methods.canUserJoin = function (role) {
   if (
     role === "teacher" &&
     !this.allowMultipleTeachers &&
-    this.teacherCount > 0
+    this.participants.filter(p => p.role === "teacher").length > 0
   )
     return false;
   return true;

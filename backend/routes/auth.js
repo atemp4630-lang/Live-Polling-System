@@ -21,10 +21,22 @@ router.post("/join", async (req, res) => {
       return res.status(400).json({ error: "Invalid role" });
     }
 
+    // Trim and validate inputs
+    const trimmedName = name.trim();
+    const trimmedSessionCode = sessionCode.trim().toUpperCase();
+
+    if (trimmedName.length === 0) {
+      return res.status(400).json({ error: "Name cannot be empty" });
+    }
+
+    if (trimmedSessionCode.length !== 6) {
+      return res.status(400).json({ error: "Session code must be 6 characters" });
+    }
+
     // Find session
     const Session = require("../models/Session");
     const session = await Session.findOne({
-      code: sessionCode.toUpperCase(),
+      code: trimmedSessionCode,
       isActive: true,
     });
 
@@ -49,7 +61,7 @@ router.post("/join", async (req, res) => {
 
     // Check if name is unique among active users
     const existingUser = await User.findOne({
-      name: name.trim(),
+      name: trimmedName,
       role,
       isActive: true,
       currentSession: session._id,
@@ -64,7 +76,7 @@ router.post("/join", async (req, res) => {
 
     // Create or update user
     let user = await User.findOne({
-      name: name.trim(),
+      name: trimmedName,
       role,
       currentSession: { $in: [null, session._id] },
     });
@@ -85,16 +97,16 @@ router.post("/join", async (req, res) => {
       user.isActive = true;
       user.lastSeen = new Date();
       user.currentSession = session._id;
-      user.sessionId = session.code;
+      user.sessionId = trimmedSessionCode;
       await user.save();
     } else {
       // Create new user
       user = new User({
-        name: name.trim(),
+        name: trimmedName,
         role,
         isActive: true,
         currentSession: session._id,
-        sessionId: session.code,
+        sessionId: trimmedSessionCode,
       });
       await user.save();
     }
@@ -127,7 +139,10 @@ router.post("/join", async (req, res) => {
     });
   } catch (error) {
     console.error("Join error:", error);
-    res.status(500).json({ error: "Failed to join session" });
+    res.status(500).json({ 
+      error: "Failed to join session", 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
   }
 });
 

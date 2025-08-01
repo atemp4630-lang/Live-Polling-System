@@ -22,6 +22,25 @@ const StudentPage = () => {
     setLoading(true);
     setError("");
     
+    // Validate inputs before sending
+    if (!name.trim()) {
+      setError("Please enter your name");
+      setLoading(false);
+      return;
+    }
+
+    if (!sessionCode.trim()) {
+      setError("Please enter session code");
+      setLoading(false);
+      return;
+    }
+
+    if (sessionCode.trim().length !== 6) {
+      setError("Session code must be 6 characters");
+      setLoading(false);
+      return;
+    }
+
     const result = await login(name, 'student', sessionCode);
     
     if (result.success) {
